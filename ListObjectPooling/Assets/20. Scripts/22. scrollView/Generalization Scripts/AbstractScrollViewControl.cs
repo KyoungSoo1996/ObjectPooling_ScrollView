@@ -2,7 +2,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public abstract class AbstractScrollViewControl<TUI, TData>: MonoBehaviour where TUI : IContentUIControl<TData> where TData : class
+public abstract class AbstractScrollViewControl<TUI, TData> : MonoBehaviour where TUI : IContentUIControl<TData> where TData : class
 {
     [Header("hide objects")]
     [SerializeField] int marginCount;
@@ -30,7 +30,8 @@ public abstract class AbstractScrollViewControl<TUI, TData>: MonoBehaviour where
     List<TData> contentDatas { get; set; }
 
 
-    public  void setContentData(List<TData> _Tdata){
+    public void setContentData(List<TData> _Tdata)
+    {
         contentDatas = _Tdata;
         dataCount = contentDatas.Count;
     }
@@ -50,7 +51,7 @@ public abstract class AbstractScrollViewControl<TUI, TData>: MonoBehaviour where
 
     public void OnDragScrollView()
     {
-        viewStartIndex = (int)((rectScrollView.localPosition.y - 400) / (rectContentPrefabs.rect.height + spacing));
+        viewStartIndex = (int)((rectScrollView.localPosition.y - (rectViewport.rect.height * 0.5f)) / (rectContentPrefabs.rect.height + spacing));
         viewEndIndex = viewStartIndex + intervalIndex;
 
         if (viewStartIndex != viewPrevIndex)
