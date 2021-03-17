@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 
@@ -11,17 +9,20 @@ public class contentControl : MonoBehaviour
     [SerializeField] Button btn_debugPrinter;
     [SerializeField] CanvasGroup canvasGroup;
 
-    public void SetData(ContentData _contentData)
+    public void SetData(ColorButtonContent _contentData)
     {
         canvasGroup.alpha = 1;
         canvasGroup.blocksRaycasts = true;
+        btn_debugPrinter.onClick.RemoveAllListeners();
         text_number.text = _contentData.number.ToString();
-        btn_debugPrinter.onClick.AddListener(delgate {btn_debugPrinter()});
+        image_colorView.color = _contentData.color;
+        btn_debugPrinter.onClick.AddListener(delegate { _contentData.buttonEvent(); });
     }
 
     public void InitData()
     {
         canvasGroup.alpha = 0;
         canvasGroup.blocksRaycasts = false;
+        btn_debugPrinter.onClick.RemoveAllListeners();
     }
 }
