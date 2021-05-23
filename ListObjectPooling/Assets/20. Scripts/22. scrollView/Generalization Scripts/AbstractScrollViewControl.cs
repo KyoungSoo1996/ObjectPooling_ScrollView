@@ -8,91 +8,98 @@ public abstract class AbstractScrollViewControl<TUI, TData> : MonoBehaviour wher
     [SerializeField] int marginCount;
 
     [Header("Content Object Prefabs")]
-    [SerializeField] private Transform transformContentPrefabs;
+    [SerializeField] private Transform transformContentPrefabs = null;
 
     [Header("scrollView Content")]
-    [SerializeField] private Transform transformView;
+    [SerializeField] private Transform transformView = null;
 
     [Header("scrollView Viewport")]
-    [SerializeField] private Transform transformViewport;
+    [SerializeField] private Transform transformViewport = null;
+
+    private RectTransform rectViewport = null;
+    private RectTransform rectScrollView = null;
+    private RectTransform rectContentPrefabs = null;
 
     // List View Index
-    int startIndex { get; set; }
-    int EndIndex { get; set; }
-    int viewStartIndex { get; set; }
-    int viewPrevIndex { get; set; }
-    int viewEndIndex { get; set; }
-    int intervalIndex { get; set; }
-    //
+    private int startIndex, endIndex;
+    private int viewStartIndex, viewEndIndex, viewPrevIndex;
+    private int intervalIndex;
 
-    List<Transform> transformContents = new List<Transform>();
+    private int contentsCount, dataCount;
+    private float contentHeightSize;
+    private float spacing;
 
-    List<TData> contentDatas { get; set; }
+    protected List<Transform> transformContents = new List<Transform>();
 
+    private List<TData> contentDatas { get; set; }
 
-    public void setContentData(List<TData> _Tdata)
+    public void Init()
     {
-        contentDatas = _Tdata;
-        dataCount = contentDatas.Count;
+        InitScrollView();
     }
 
-    int contentsCount, dataCount;
-    private RectTransform rectViewport;
-    private RectTransform rectScrollView;
-    private RectTransform rectContentPrefabs;
-
-
-    public void Init(List<TData> _Tdata)
+    public void SetData(List<TData> _Tdata)
     {
+        ResetList();
         setContentData(_Tdata);
-        InitScrollView();
-        DragScrollViewControl();
+        SetScrollView();
     }
 
     public void OnDragScrollView()
     {
         viewStartIndex = (int)((rectScrollView.localPosition.y - (rectViewport.rect.height * 0.5f)) / (rectContentPrefabs.rect.height + spacing));
-        viewEndIndex = viewStartIndex + intervalIndex;
-
+        viewEndIndex = viewStartIndex + contentsCount;
         if (viewStartIndex != viewPrevIndex)
         {
             DragScrollViewControl();
         }
     }
 
-    public void InitScrollView()
+    private void ResetList()
+    {
+        for (int i = 0; i < transformContents.Count; i++)
+        {
+            Destroy(transformContents[i].gameObject);
+        }
+        transformContents.Clear();
+    }
+
+    private void setContentData(List<TData> _Tdata)
+    {
+        contentDatas = _Tdata;
+        dataCount = contentDatas.Count;
+    }
+
+    private void InitScrollView()
     {
         rectContentPrefabs = transformContentPrefabs.GetComponent<RectTransform>();
         rectScrollView = transformView.GetComponent<RectTransform>();
         rectViewport = transformViewport.GetComponent<RectTransform>();
         intervalIndex = (int)(rectViewport.rect.height / rectContentPrefabs.rect.height) + 1;
         contentsCount = intervalIndex + marginCount * 2;
-        for (int i = 0; i < contentsCount; i++)
-        {
-            transformContents.Add(MonoBehaviour.Instantiate(rectContentPrefabs, Vector3.one, Quaternion.identity, transformView));
-        }
-        SetViewRectSize(dataCount);
-        EndIndex = contentsCount > dataCount ? dataCount : contentsCount;
-    }
-
-    float contentHeightSize;
-    float spacing;
-
-    public void SetViewRectSize(int _count)
-    {
         spacing = transformView.GetComponent<VerticalLayoutGroup>().spacing;
         contentHeightSize = spacing + rectContentPrefabs.rect.height;
-        rectScrollView.sizeDelta = new Vector2(0, (contentHeightSize * _count) + spacing);
         rectScrollView.anchoredPosition = new Vector2(0, 0);
-        for (int i = 0; i < contentsCount; i++)
+    }
+
+    private void SetScrollView()
+    {
+        endIndex = contentsCount > dataCount ? dataCount : contentsCount;
+        for (int i = 0; i < endIndex; i++)
         {
-            transformContents[i % contentsCount].GetComponent<TUI>().SetData(contentDatas[i]);
+            transformContents.Add(MonoBehaviour.Instantiate(rectContentPrefabs, transformView));
+        }
+        rectScrollView.sizeDelta = new Vector2(rectScrollView.sizeDelta.x, (contentHeightSize * dataCount) + spacing);
+        for (int i = 0; i < endIndex; i++)
+        {
+            transformContents[i % contentsCount].GetComponent<TUI>().InitData();
+            transformContents[i % endIndex].GetComponent<TUI>().SetData(contentDatas[i]);
         }
     }
 
-    public void DragScrollViewControl()
+    private void DragScrollViewControl()
     {
-        for (int i = startIndex; i < EndIndex; i++)
+        for (int i = startIndex; i < endIndex; i++)
         {
             if (viewStartIndex <= i && i <= viewEndIndex)
             {
@@ -105,13 +112,13 @@ public abstract class AbstractScrollViewControl<TUI, TData> : MonoBehaviour wher
         if (viewPrevIndex <= viewStartIndex)
         {
             startIndex = Mathf.Clamp(viewStartIndex + 1, 0, dataCount);
-            EndIndex = Mathf.Clamp(viewEndIndex + 1, 0, dataCount);
+            endIndex = Mathf.Clamp(viewEndIndex + 1, 0, dataCount);
             viewPrevIndex = viewStartIndex;
         }
         else
         {
             startIndex = Mathf.Clamp(viewStartIndex - 1, 0, dataCount);
-            EndIndex = Mathf.Clamp(viewEndIndex - 1, 0, dataCount);
+            endIndex = Mathf.Clamp(viewEndIndex - 1, 0, dataCount);
             viewPrevIndex = viewStartIndex;
         }
     }
